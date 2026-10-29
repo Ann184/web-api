@@ -1,121 +1,128 @@
+
 import express, { type Request, type Response } from 'express';
-import fs from 'node:fs';
-import path from 'node:path';
+import mongoose from 'mongoose';
+
+import UserModel from '../models/User';
 
 const router = express.Router();
 
-const usersFilePath = path.join(process.cwd(), 'users.txt');
-
-interface User {
-  id: number;
-  name: string;
-}
-
-function readUsers(): User[] {
-  if (!fs.existsSync(usersFilePath)) {
-    fs.writeFileSync(usersFilePath, '', 'utf-8');
-  }
-
-  const fileContent = fs.readFileSync(usersFilePath, 'utf-8');
-
-  if (!fileContent.trim()) {
-    return [];
-  }
-
-  const lines = fileContent.trim().split('\n');
-
-  const users: User[] = lines.map((line) => {
-    const [id, name] = line.split(',');
-
-    return {
-      id: Number(id),
-      name: name ? name.trim() : '',
-    };
-  });
-
-  return users;
-}
-
-function writeUsers(users: User[]): void {
-  const fileContent = users
-    .map((u) => `${u.id},${u.name}`)
-    .join('\n');
-
-  fs.writeFileSync(usersFilePath, fileContent, 'utf-8');
-}
-
 // Получение всех пользователей
-router.get('/', (req: Request, res: Response) => {
-  const users = readUsers();
-  res.json(users);
+router.get('/', async (_req: Request, res: Response) => {
+  try {
+    const users = await UserModel.find();
+    res.json(users);
+  } catch (error) {
+    console.error('Ошибка получения пользователей:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
 });
 
 // Получение одного пользователя по ID
-router.get('/:id', (req: Request, res: Response) => {
-  const users = readUsers();
-  const userId = Number(req.params.id);
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
 
-  const user = users.find((u) => u.id === userId);
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ message: 'Некорректный ID пользователя' });
+      return;
+    }
 
-  if (!user) {
-    res.status(404).json({ message: 'Пользователь не найден' });
-    return;
+    const user = await UserModel.findById(id);
+
+    if (!user) {
+      res.status(404).json({ message: 'Пользователь не найден' });
+      return;
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Ошибка получения пользователя:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
-
-  res.json(user);
 });
 
 // Создание пользователя
-router.post('/', (req: Request, res: Response) => {
-  const users = readUsers();
+router.post('/', async (req: Request, res: Response) => {
+  try {
+    const name = req.body?.name;
 
-  const newUser: User = {
-    id: Date.now(),
-    name: req.body.name,
-  };
+    if (typeof name !== 'string' || !name.trim()) {
+      res.status(400).json({
+        message: 'Поле name обязательно и должно быть непустой строкой',
+      });
+      return;
+    }
 
-  users.push(newUser);
-  writeUsers(users);
+    const newUser = await UserModel.create({
+      name: name.trim(),
+    });
 
-  res.status(201).json(newUser);
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.error('Ошибка создания пользователя:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
 });
 
 // Обновление пользователя
-router.patch('/:id', (req: Request, res: Response) => {
-  const users = readUsers();
-  const userId = Number(req.params.id);
+router.patch('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
 
-  const user = users.find((u) => u.id === userId);
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ message: 'Некорректный ID пользователя' });
+      return;
+    }
 
-  if (!user) {
-    res.status(404).json({ message: 'Пользователь не найден' });
-    return;
+    const name = req.body?.name;
+
+    if (typeof name !== 'string' || !name.trim()) {
+      res.status(400).json({
+        message: 'Поле name обязательно и должно быть непустой строкой',
+      });
+      return;
+    }
+
+    const user = await UserModel.findByIdAndUpdate(
+      id,
+      { name: name.trim() },
+      { new: true, runValidators: true },
+    );
+
+    if (!user) {
+      res.status(404).json({ message: 'Пользователь не найден' });
+      return;
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Ошибка обновления пользователя:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
-
-  if (req.body.name) {
-    user.name = req.body.name;
-  }
-
-  writeUsers(users);
-  res.json(user);
 });
 
 // Удаление пользователя
-router.delete('/:id', (req: Request, res: Response) => {
-  const users = readUsers();
-  const userId = Number(req.params.id);
+router.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
 
-  const index = users.findIndex((u) => u.id === userId);
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ message: 'Некорректный ID пользователя' });
+      return;
+    }
 
-  if (index === -1) {
-    res.status(404).json({ message: 'Пользователь не найден' });
-    return;
+    const user = await UserModel.findByIdAndDelete(id);
+
+    if (!user) {
+      res.status(404).json({ message: 'Пользователь не найден' });
+      return;
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Ошибка удаления пользователя:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
-
-  const [deletedUser] = users.splice(index, 1);
-
-  writeUsers(users);
-  res.json(deletedUser);
 });
 
 export default router;

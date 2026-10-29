@@ -1,24 +1,38 @@
+
+import 'dotenv/config';
 import express, { type Express } from 'express';
+import mongoose from 'mongoose';
 import path from 'node:path';
 
 import usersRouter from './routers/users';
 import logger from './middlewares/logger';
 
 const app: Express = express();
-const PORT = 5000;
+const PORT = Number(process.env.PORT) || 3000;
 
-// Разбор JSON в теле запроса
 app.use(express.json());
-
-// Кастомный миддлвейр для логирования запросов
 app.use(logger);
-
-// Обработка статических файлов из папки static
 app.use(express.static(path.join(process.cwd(), 'static')));
+app.use('/users', usersRouter);
 
-// Группировка маршрутов пользователей
-app.use('/user', usersRouter);
+async function startServer(): Promise<void> {
+  try {
+    const mongoUri = process.env.MONGODB_URI;
 
-app.listen(PORT, () => {
-  console.log(`Сервер запущен на http://localhost:${PORT}`);
-});
+    if (!mongoUri) {
+      throw new Error('Не задана переменная MONGODB_URI в файле .env');
+    }
+
+    await mongoose.connect(mongoUri);
+    console.log('Подключение к MongoDB установлено');
+
+    app.listen(PORT, () => {
+      console.log(`Сервер запущен на http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Ошибка запуска сервера:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
