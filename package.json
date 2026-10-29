@@ -14,11 +14,15 @@
   "dependencies": {
     "dotenv": "^18.0.9",
     "express": "^5.2.1",
-    "mongoose": "^9.11.4"
+    "mongoose": "^9.11.4",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.6",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
