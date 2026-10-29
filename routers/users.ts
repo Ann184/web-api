@@ -1,10 +1,123 @@
-
 import express, { type Request, type Response } from 'express';
 import mongoose from 'mongoose';
 
 import UserModel from '../models/User';
 
 const router = express.Router();
+
+/**
+ * @openapi
+ * /users:
+ *   get:
+ *     summary: Получить список всех пользователей
+ *     tags:
+ *       - Users
+ *     responses:
+ *       '200':
+ *         description: Список пользователей успешно получен
+ *       '500':
+ *         description: Ошибка сервера
+ *
+ *   post:
+ *     summary: Создать пользователя
+ *     tags:
+ *       - Users
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Анна
+ *     responses:
+ *       '201':
+ *         description: Пользователь успешно создан
+ *       '400':
+ *         description: Некорректные данные
+ *       '500':
+ *         description: Ошибка сервера
+ *
+ * /users/{id}:
+ *   get:
+ *     summary: Получить пользователя по ID
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Идентификатор пользователя в MongoDB
+ *     responses:
+ *       '200':
+ *         description: Пользователь найден
+ *       '400':
+ *         description: Некорректный ID пользователя
+ *       '404':
+ *         description: Пользователь не найден
+ *       '500':
+ *         description: Ошибка сервера
+ *
+ *   patch:
+ *     summary: Обновить пользователя по ID
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Идентификатор пользователя в MongoDB
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Анна Жалдак
+ *     responses:
+ *       '200':
+ *         description: Пользователь успешно обновлён
+ *       '400':
+ *         description: Некорректные данные или ID
+ *       '404':
+ *         description: Пользователь не найден
+ *       '500':
+ *         description: Ошибка сервера
+ *
+ *   delete:
+ *     summary: Удалить пользователя по ID
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Идентификатор пользователя в MongoDB
+ *     responses:
+ *       '200':
+ *         description: Пользователь успешно удалён
+ *       '400':
+ *         description: Некорректный ID пользователя
+ *       '404':
+ *         description: Пользователь не найден
+ *       '500':
+ *         description: Ошибка сервера
+ */
 
 // Получение всех пользователей
 router.get('/', async (_req: Request, res: Response) => {
